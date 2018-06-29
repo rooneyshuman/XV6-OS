@@ -99,6 +99,10 @@ extern int sys_wait(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
 extern int sys_halt(void);
+//P1 - date syscall
+#ifdef CS333_P1
+extern int sys_date(void);
+#endif
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -123,12 +127,16 @@ static int (*syscalls[])(void) = {
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
 [SYS_halt]    sys_halt,
+//P1 - date syscall
+#ifdef CS333_P1
+[SYS_date]	  sys_date,
+#endif
 };
 
 
 // put data structure for printing out system call invocation information here
 // P1 - Array to print syscall names
-#ifdef PRINT_SYSCALLS
+#if defined(CS333_P1) && defined(PRINT_SYSCALLS)
 static char * syscallnames[] = {
 [SYS_fork]    "fork",
 [SYS_exit]    "exit",

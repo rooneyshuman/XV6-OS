@@ -93,3 +93,19 @@ sys_halt(void)
   outw( 0x604, 0x0 | 0x2000);
   return 0;
 }
+
+//P1 - date syscall
+#ifdef CS333_P1
+int 
+sys_date(void)
+{
+  struct rtcdate *d;
+
+  if (argptr(0, (void*) &d, sizeof(struct rtcdate)) < 0)
+	return -1;
+	
+  cmostime(d);
+  
+  return 0;
+}
+#endif

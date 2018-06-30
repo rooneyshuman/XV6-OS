@@ -82,6 +82,11 @@ found:
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
 
+  //P1 - ctrl-p
+  #ifdef CS333_P1
+  p->start_ticks = ticks;
+  #endif
+
   return p;
 }
 
@@ -518,7 +523,18 @@ procdump(void)
       state = states[p->state];
     else
       state = "???";
+	//P1 - ctrl-p print
+	#ifndef CS333_P1
     cprintf("%d %s %s", p->pid, state, p->name);
+	#else
+	int elapsed = ticks - p->start_ticks;
+	int millisec = elapsed % 1000;
+	elapsed = elapsed/1000;
+
+	cprintf("\nPID\tState\tName\tElapsed\t PCs\n");
+    cprintf("%d\t%s\t%s\t%d.%d\t", p->pid, state, p->name, elapsed, millisec,"\n");
+	#endif
+
     if(p->state == SLEEPING){
       getcallerpcs((uint*)p->context->ebp+2, pc);
       for(i=0; i<10 && pc[i] != 0; i++)

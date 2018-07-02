@@ -515,6 +515,8 @@ procdump(void)
   struct proc *p;
   char *state;
   uint pc[10];
+  int elapsed;
+  int millisec;
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->state == UNUSED)
@@ -527,12 +529,20 @@ procdump(void)
 	#ifndef CS333_P1
     cprintf("%d %s %s", p->pid, state, p->name);
 	#else
-	int elapsed = ticks - p->start_ticks;
-	int millisec = elapsed % 1000;
-	elapsed = elapsed/1000;
+    elapsed = ticks - p->start_ticks;
+    millisec = elapsed % 1000;
+    elapsed = elapsed/1000;
 
 	cprintf("\nPID\tState\tName\tElapsed\t PCs\n");
-    cprintf("%d\t%s\t%s\t%d.%d\t", p->pid, state, p->name, elapsed, millisec,"\n");
+    cprintf("%d\t%s\t%s\t%d.", p->pid, state, p->name, elapsed);
+
+    if (millisec == 0)
+      cprintf("000");
+	else if (millisec < 10 && millisec > 0)
+      cprintf("00");
+    else if (millisec < 100 && millisec >= 10)
+      cprintf("0");  
+	cprintf("%d\t", millisec,"\n");
 	#endif
 
     if(p->state == SLEEPING){

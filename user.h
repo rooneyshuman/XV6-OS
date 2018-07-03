@@ -28,6 +28,14 @@ int halt(void);
 #ifdef CS333_P1
 int date(struct rtcdate*);
 #endif
+//P2 - UIDs, GIDs, PPIDs
+#ifdef CS333_P2
+uint getuid(void);
+uint getgid(void);
+uint getppid(void);
+int setuid(uint);
+int setgid(uint);
+#endif
 
 // ulib.c
 int stat(char*, struct stat*);

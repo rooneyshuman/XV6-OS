@@ -68,7 +68,12 @@ struct proc {
   char name[16];               // Process name (debugging)
   //P1 - ctrl-p
   #ifdef CS333_P1
-  uint start_ticks;
+  uint start_ticks;            // When process started
+  #endif
+  //P2 - UID, GID
+  #ifdef CS333_P2
+  uint uid;                    // Process User ID
+  uint gid;                    // Process Group ID
   #endif
 };
 

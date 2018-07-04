@@ -117,6 +117,11 @@ userinit(void)
   p->cwd = namei("/");
 
   p->state = RUNNABLE;
+  //P2 - UID, GID
+  #ifdef CS333_P2
+  p->uid = DEF_UID;
+  p->gid = DEF_GID;
+  #endif
 }
 
 // Grow current process's memory by n bytes.
@@ -162,6 +167,11 @@ fork(void)
   np->sz = proc->sz;
   np->parent = proc;
   *np->tf = *proc->tf;
+  //P2 - UID, GID
+  #ifdef CS333_P2
+  np->uid = proc->uid;
+  np->gid = proc->gid;
+  #endif
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;

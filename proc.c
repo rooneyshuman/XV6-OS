@@ -119,8 +119,8 @@ userinit(void)
   p->state = RUNNABLE;
   //P2 - UID, GID
   #ifdef CS333_P2
-  p->uid = DEF_UID;
-  p->gid = DEF_GID;
+  p->uid = DEFUID;
+  p->gid = DEFGID;
   #endif
 }
 

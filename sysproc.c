@@ -128,9 +128,9 @@ uint
 sys_getppid(void)
 {
   //Return pid for process w/o ppid (init)
-  if (proc->ppid == NULL)
-    return pid;
-  return proc->ppid;
+  if (!proc->parent)
+    return proc->pid;
+  return proc->parent->pid;
 }
 
 int

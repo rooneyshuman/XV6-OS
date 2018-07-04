@@ -101,11 +101,61 @@ sys_date(void)
 {
   struct rtcdate *d;
 
-  if (argptr(0, (void*) &d, sizeof(struct rtcdate)) < 0)
-	return -1;
+  if(argptr(0, (void*) &d, sizeof(struct rtcdate)) < 0)
+    return -1;
 	
   cmostime(d);
   
+  return 0;
+}
+#endif
+
+//P2 - UID, GID, PPID
+#ifdef CS333_P2
+uint
+sys_getuid(void)
+{
+  return proc->uid;
+}
+
+uint
+sys_getgid(void)
+{
+  return proc->gid;
+}
+
+uint
+sys_getppid(void)
+{
+  //Return pid for process w/o ppid (init)
+  if (proc->ppid == NULL)
+    return pid;
+  return proc->ppid;
+}
+
+int
+sys_setuid(void)
+{
+  int uid;
+
+  if(argint(0, &uid) < 0)
+    return -1;
+  if(uid < 0 || uid > 32767)
+    return -1;
+  proc->uid = uid;
+  return 0;
+}
+
+int
+sys_setgid(void)
+{
+  int gid;
+
+  if(argint(0, &gid) < 0)
+    return -1;
+  if(gid < 0 || gid > 32767)
+    return -1;
+  proc->gid = gid;
   return 0;
 }
 #endif

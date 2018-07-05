@@ -89,7 +89,7 @@ found:
   //P2 - CPU time tracking
   #ifdef CS333_P2
   p->cpu_ticks_total = 0;
-  p->cpu_ticks_in = 0:
+  p->cpu_ticks_in = 0;
   #endif
 
   return p;
@@ -310,7 +310,7 @@ wait(void)
 //  - choose a process to run
 //  - swtch to start running that process
 //  - eventually that process transfers control
-//      via swtch back to 339Gthe scheduler.
+//      via swtch back to the scheduler.
 #ifndef CS333_P3P4
 // original xv6 scheduler. Use if CS333_P3P4 NOT defined.
 void

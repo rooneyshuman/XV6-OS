@@ -75,7 +75,7 @@ struct proc {
   uint uid;                    // Process User ID
   uint gid;                    // Process Group ID
   uint cpu_ticks_total;        // Total elapsed ticks in CPU
-  uint cpu_ticks_in            // Ticks when scheduled 
+  uint cpu_ticks_in;           // Ticks when scheduled 
   #endif
 };
 

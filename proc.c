@@ -86,6 +86,11 @@ found:
   #ifdef CS333_P1
   p->start_ticks = ticks;
   #endif
+  //P2 - CPU time tracking
+  #ifdef CS333_P2
+  p->cpu_ticks_total = 0;
+  p->cpu_ticks_in = 0:
+  #endif
 
   return p;
 }
@@ -305,7 +310,7 @@ wait(void)
 //  - choose a process to run
 //  - swtch to start running that process
 //  - eventually that process transfers control
-//      via swtch back to the scheduler.
+//      via swtch back to 339Gthe scheduler.
 #ifndef CS333_P3P4
 // original xv6 scheduler. Use if CS333_P3P4 NOT defined.
 void
@@ -332,6 +337,9 @@ scheduler(void)
       proc = p;
       switchuvm(p);
       p->state = RUNNING;
+      #ifdef CS333_P2
+      p->cpu_ticks_in = ticks;
+      #endif
       swtch(&cpu->scheduler, proc->context);
       switchkvm();
 
@@ -372,6 +380,10 @@ sched(void)
   if(readeflags()&FL_IF)
     panic("sched interruptible");
   intena = cpu->intena;
+  //P2 - CPU time tracking
+  #ifdef CS333_P2
+  proc->cpu_ticks_total += ticks - proc->cpu_ticks_in;
+  #endif
   swtch(&proc->context, cpu->scheduler);
   cpu->intena = intena;
 }

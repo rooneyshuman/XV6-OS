@@ -110,6 +110,7 @@ extern int sys_getgid(void);
 extern int sys_getppid(void);
 extern int sys_setuid(void);
 extern int sys_setgid(void);
+extern int sys_getprocs(void);
 #endif
 
 static int (*syscalls[])(void) = {
@@ -146,6 +147,7 @@ static int (*syscalls[])(void) = {
 [SYS_getppid]	  sys_getppid,
 [SYS_setuid]	  sys_setuid,
 [SYS_setgid]	  sys_setgid,
+[SYS_getprocs]  sys_getprocs,
 #endif
 };
 
@@ -183,6 +185,7 @@ static char * syscallnames[] = {
 [SYS_getppid]	"getppid",
 [SYS_setuid]	"setuid",
 [SYS_setgid]	"setgid",
+[SYS_getprocs] "getprocs",
 #endif
 };
 #endif

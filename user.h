@@ -1,5 +1,6 @@
 struct stat;
 struct rtcdate;
+struct uproc;
 
 // system calls
 int fork(void);
@@ -35,6 +36,7 @@ uint getgid(void);
 uint getppid(void);
 int setuid(uint);
 int setgid(uint);
+int getprocs(uint, struct uproc*);
 #endif
 
 // ulib.c

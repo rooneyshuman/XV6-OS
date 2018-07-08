@@ -727,3 +727,37 @@ initFreeList(void)
   }
 }
 #endif
+
+#ifdef CS333_P2
+int getprocs(uint max, struct uproc * table)
+{
+  struct proc * p;
+  int count;
+
+  count = 0;
+  p = table.proc;
+
+  acquire(&ptable.lock);
+  while(p < &ptable.proc[NPROC] && count < max) {
+    if(p->state != UNUSED && p->state != EMBRYO) {
+      ++count;
+      table->pid = p->pid;
+      table->uid = p->uid;
+      table->gid = p->gid;
+      if(p->parent)
+        table->ppid = p->parent->pid;
+      else
+        table->ppid = p->pid;
+      table->elapsed_ticks = ticks - p->start_ticks;
+      table->CPU_total_ticks = p->cpu_ticks_total;
+      safestrcpy(table->state, states[p->state], sizeof(states[p->state]));
+      table->size = p->sz;
+      safestrcpy(table->name, p->name, sizeof(ptable->name));
+    }
+    ++p;
+  }
+  release(&ptable.lock);
+
+  return count;
+}
+#endif

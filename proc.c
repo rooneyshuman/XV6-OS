@@ -755,9 +755,10 @@ int getprocs(uint max, struct uproc * table)
         table->ppid = p->pid;
       table->elapsed_ticks = ticks - p->start_ticks;
       table->CPU_total_ticks = p->cpu_ticks_total;
-      safestrcpy(table->state, states[p->state], sizeof(states[p->state]));
+      safestrcpy(table->state, states[p->state], STRMAX);
       table->size = p->sz;
-      safestrcpy(table->name, p->name, sizeof(p->name));
+      safestrcpy(table->name, p->name, STRMAX);
+      ++table;
     }
     ++p;
   }

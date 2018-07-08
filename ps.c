@@ -6,7 +6,7 @@
 int
 main(void)
 {
-  uint max = 1;
+  uint max = 16;
   struct uproc* table;
   int count;
   int elapsed;
@@ -20,7 +20,10 @@ main(void)
   if(count < 0)
     printf(2, "There was an error in creating the user process table\n");
   else {
-    printf(1, "\nPID\tName\t\tUID\tGID\tPPID\tElapsed\tCPU\tState\tSize\t PCs\n");
+    printf(1, "total entries: ");
+    printf(1, "%d ", count, "\n");
+
+    printf(1, "\nPID\tName\tUID\tGID\tPPID\tElapsed\tCPU\tState\tSize\n");
 
     for(int i = 0; i < count; ++i) {
       elapsed = table[i].elapsed_ticks;
@@ -30,7 +33,7 @@ main(void)
       cpu_millisec = cpu % 1000;
       cpu = cpu/1000;
 
-      printf(1, "%d\t%s\t\t%d\t%d\t%d\t%d.", table[i].pid, table[i].name, table[i].uid, table[i].gid, table[i].ppid, elapsed);
+      printf(1, "%d\t%s\t%d\t%d\t%d\t%d.", table[i].pid, table[i].name, table[i].uid, table[i].gid, table[i].ppid, elapsed);
       if (millisec == 0)
         printf(1, "000");
       else if (millisec < 10 && millisec > 0)
@@ -45,7 +48,7 @@ main(void)
         printf(1, "00");
       else if (cpu_millisec < 100 && cpu_millisec >= 10)
         printf(1, "0");  
-      printf(1, "%d\t%s\t%d\t", cpu_millisec, table[i].state, table[i].size,"\n");
+      printf(1, "%d\t%s\t%d\n", cpu_millisec, table[i].state, table[i].size);
     }
   }
 

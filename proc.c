@@ -539,6 +539,12 @@ procdump(void)
   char *state;
   uint pc[10];
 
+  #ifdef CS333_P2
+  cprintf("\nPID\tName\t\tUID\tGID\tPPID\tElapsed\tCPU\tState\tSize\t PCs\n");
+  #elif CS333_P1
+  cprintf("\nPID\tState\tName\tElapsed\t PCs\n");
+  #endif
+
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->state == UNUSED)
       continue;
@@ -567,7 +573,6 @@ procdump(void)
     cpu = cpu/1000;
 
 
-	  cprintf("\nPID\tName\t\tUID\tGID\tPPID\tElapsed\tCPU\tState\tSize\t PCs\n");
     cprintf("%d\t%s\t\t%d\t%d\t%d\t%d.", p->pid, p->name, p->uid, p->gid, ppid, elapsed);
 
     if (millisec == 0)
@@ -595,7 +600,6 @@ procdump(void)
     millisec = elapsed % 1000;
     elapsed = elapsed/1000;
 
-	  cprintf("\nPID\tState\tName\tElapsed\t PCs\n");
     cprintf("%d\t%s\t%s\t%d.", p->pid, state, p->name, elapsed);
 
     if (millisec == 0)

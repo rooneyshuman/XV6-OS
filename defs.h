@@ -122,7 +122,7 @@ int             wait(void);
 void            wakeup(void*);
 void            yield(void);
 #ifdef CS333_P2
-int             getprocs(uint, struct* uproc);
+int             getprocs(uint, struct uproc*);
 #endif
 
 // swtch.S

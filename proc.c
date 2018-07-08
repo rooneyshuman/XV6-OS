@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "uproc.h"
 
 struct {
   struct spinlock lock;
@@ -735,7 +736,7 @@ int getprocs(uint max, struct uproc * table)
   int count;
 
   count = 0;
-  p = table.proc;
+  p = ptable.proc;
 
   acquire(&ptable.lock);
   while(p < &ptable.proc[NPROC] && count < max) {
@@ -752,7 +753,7 @@ int getprocs(uint max, struct uproc * table)
       table->CPU_total_ticks = p->cpu_ticks_total;
       safestrcpy(table->state, states[p->state], sizeof(states[p->state]));
       table->size = p->sz;
-      safestrcpy(table->name, p->name, sizeof(ptable->name));
+      safestrcpy(table->name, p->name, sizeof(p->name));
     }
     ++p;
   }

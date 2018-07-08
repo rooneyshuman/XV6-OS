@@ -1,10 +1,55 @@
 #ifdef CS333_P2
 #include "types.h"
 #include "user.h"
+#include "uproc.h"
+
 int
 main(void)
 {
-  printf(1, "Not imlpemented yet.\n");
+  uint max = 1;
+  struct uproc* table;
+  int count;
+  int elapsed;
+  int millisec;
+  int cpu;
+  int cpu_millisec;
+
+  table = malloc(sizeof(struct uproc) * max);
+  count = getprocs(max, table);
+
+  if(count < 0)
+    printf(2, "There was an error in creating the user process table\n");
+  else {
+    printf(1, "\nPID\tName\t\tUID\tGID\tPPID\tElapsed\tCPU\tState\tSize\t PCs\n");
+
+    for(int i = 0; i < count; ++i) {
+      elapsed = table[i].elapsed_ticks;
+      millisec = elapsed % 1000;
+      elapsed = elapsed/1000;
+      cpu = table[i].CPU_total_ticks;
+      cpu_millisec = cpu % 1000;
+      cpu = cpu/1000;
+
+      printf(1, "%d\t%s\t\t%d\t%d\t%d\t%d.", table[i].pid, table[i].name, table[i].uid, table[i].gid, table[i].ppid, elapsed);
+      if (millisec == 0)
+        printf(1, "000");
+      else if (millisec < 10 && millisec > 0)
+        printf(1, "00");
+      else if (millisec < 100 && millisec >= 10)
+        printf(1, "0");  
+      printf(1, "%d\t%d.", millisec, cpu);
+                  
+      if (cpu_millisec == 0)
+        printf(1, "000");
+      else if (cpu_millisec < 10 && cpu_millisec > 0)
+        printf(1, "00");
+      else if (cpu_millisec < 100 && cpu_millisec >= 10)
+        printf(1, "0");  
+      printf(1, "%d\t%s\t%d\t", cpu_millisec, table[i].state, table[i].size,"\n");
+    }
+  }
+
+  free(table);
   exit();
 }
 #endif

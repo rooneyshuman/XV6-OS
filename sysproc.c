@@ -170,7 +170,7 @@ sys_getprocs(void)
 
   if(argint(0, &max) < 0)
     return -1;
-  if(argptr(0, (void*) &table, sizeof(struct rtcdate) * max) < 0)
+  if(argptr(1, (void*) &table, sizeof(struct rtcdate) * max) < 0)
     return -1;
   
   return getprocs(max,table);

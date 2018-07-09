@@ -575,17 +575,13 @@ procdump(void)
 
     cprintf("%d\t%s\t\t%d\t%d\t%d\t%d.", p->pid, p->name, p->uid, p->gid, ppid, elapsed);
 
-    if (millisec == 0)
-      cprintf("000");
-	  else if (millisec < 10 && millisec > 0)
+	  if (millisec < 10)
       cprintf("00");
     else if (millisec < 100 && millisec >= 10)
       cprintf("0");  
 	  cprintf("%d\t%d.", millisec, cpu);
    
-    if (cpu_millisec == 0)
-      cprintf("000");
-	  else if (cpu_millisec < 10 && cpu_millisec > 0)
+	  if (cpu_millisec < 10)
       cprintf("00");
     else if (cpu_millisec < 100 && cpu_millisec >= 10)
       cprintf("0");  
@@ -602,9 +598,7 @@ procdump(void)
 
     cprintf("%d\t%s\t%s\t%d.", p->pid, state, p->name, elapsed);
 
-    if (millisec == 0)
-      cprintf("000");
-  	else if (millisec < 10 && millisec > 0)
+  	if (millisec < 10)
       cprintf("00");
     else if (millisec < 100 && millisec >= 10)
       cprintf("0");  

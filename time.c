@@ -19,7 +19,7 @@ main(int argc, char* argv[])
   //If child, call exec
   else if (pid == 0) {
     exec(argv[1], &argv[1]);
-      exit();
+    exit();
   }
   //Parent process - wait for child, display time
   else {
@@ -30,7 +30,7 @@ main(int argc, char* argv[])
     run_time = run_time/1000;
     printf(1, "%d.", run_time);
     if (millisec < 10)
-        printf(1, "00");
+      printf(1, "00");
     else if (millisec < 100 && millisec >= 10)
       printf(1, "0");  
 

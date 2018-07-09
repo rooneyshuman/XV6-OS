@@ -572,8 +572,10 @@ procdump(void)
     cpu_millisec = cpu % 1000;
     cpu = cpu/1000;
 
-
-    cprintf("%d\t%s\t\t%d\t%d\t%d\t%d.", p->pid, p->name, p->uid, p->gid, ppid, elapsed);
+    cprintf("%d\t%s\t", p->pid, p->name);
+    if (strlen(p->name) < 7)    //Ensures column spacing is aligned for longer names
+      cprintf("\t");
+    cprintf("%d\t%d\t%d\t%d.", p->uid, p->gid, ppid, elapsed);
 
 	  if (millisec < 10)
       cprintf("00");

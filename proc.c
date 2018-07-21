@@ -724,7 +724,7 @@ initFreeList(void)
 
   for(p = ptable.proc; p < ptable.proc + NPROC; ++p){
     p->state = UNUSED;
-    state_list_add(&ptable.pLists.free, &ptable.pLists.free_tail, p);
+    stateListAdd(&ptable.pLists.free, &ptable.pLists.free_tail, p);
   }
 }
 #endif

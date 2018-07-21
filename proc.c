@@ -629,9 +629,9 @@ stateListAdd(struct proc** head, struct proc** tail, struct proc* p)
     *tail = p;
     p->next = 0;
   } else{
-    *tail->next = p;
-    *tail = *tail->next;
-    *tail->next = 0;
+    (*tail)->next = p;
+    *tail = (*tail)->next;
+    (*tail)->next = 0;
   }
 }
 
@@ -659,7 +659,7 @@ stateListRemove(struct proc** head, struct proc** tail, struct proc* p)
   struct proc* previous = 0;
 
   if(current == p){
-    *head = *head->next;
+    *head = (*head)->next;
     // prevent tail remaining assigned when we've removed the only item
     // on the list
     if(*tail == p){
@@ -685,7 +685,7 @@ stateListRemove(struct proc** head, struct proc** tail, struct proc* p)
   // Process found. Set the appropriate next pointer.
   if(current == *tail){
     *tail = previous;
-    *tail->next = 0;
+    (*tail)->next = 0;
   } else{
     previous->next = current->next;
   }

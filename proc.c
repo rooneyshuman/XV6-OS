@@ -8,9 +8,29 @@
 #include "spinlock.h"
 #include "uproc.h"
 
+#ifdef CS333_P3P4
+struct state_lists {
+  struct proc* ready;
+  struct proc* ready_tail;
+  struct proc* free;
+  struct proc* free_tail;
+  struct proc* sleep;
+  struct proc* sleep_tail;
+  struct proc* zombie;
+  struct proc* zombie_tail;
+  struct proc* running;
+  struct proc* running_tail;
+  struct proc* embryo;
+  struct proc* embryo_tail;
+};
+#endif
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
+  #ifdef CS333_P3P4
+  struct state_lists pLists;
+  #endif
 } ptable;
 
 static struct proc *initproc;
@@ -103,6 +123,14 @@ userinit(void)
 {
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
+
+  //P3 - state lists - Call initialization functions
+  #ifdef CS333_P3P4
+  acquire(&ptable.lock);
+  initProcessLists();
+  initFreeList();
+  release(&ptable.lock);
+  #endif 
 
   p = allocproc();
   initproc = p;

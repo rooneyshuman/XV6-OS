@@ -51,6 +51,7 @@ static void initFreeList(void);
 static void __attribute__ ((unused)) stateListAdd(struct proc** head, struct proc** tail, struct proc* p);
 static void __attribute__ ((unused)) stateListAddAtHead(struct proc** head, struct proc** tail, struct proc* p);
 static int __attribute__ ((unused)) stateListRemove(struct proc** head, struct proc** tail, struct proc* p);
+static void assertState(struct proc* p, enum proc state);
 #endif
 
 void
@@ -71,20 +72,57 @@ allocproc(void)
   char *sp;
 
   acquire(&ptable.lock);
+  
+  //For P3P4 - check free list
+  #ifdef CS333_P3P4
+  if(ptable.pLists.free)
+    p = ptable.pLists.free;
+    goto found;
+     
+  #else
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if(p->state == UNUSED)
       goto found;
+  #endif
+
   release(&ptable.lock);
   return 0;
 
-found:
+ found:
+  #ifdef CS333_P3P4
+  //Panics kernel if error in removing process from free list, proceeds otherwise to add to embryo list
+  //1st remove from old list, then assert state, update state, and last add to new state list
+  int rc = stateListRemove(&ptable.pLists.free, &ptable.pLists.free_tail, p);
+  if (rc < 0)
+    panic("Failure in stateListRemove from free list\n");
+  assertState(p, UNUSED);
   p->state = EMBRYO;
+  stateListAdd(&ptable.pLists.embryo, &ptable.pLists.embryo_tail, p);
+  
+  #else
+  p->state = EMBRYO;
+  #endif
+
   p->pid = nextpid++;
   release(&ptable.lock);
 
   // Allocate kernel stack.
   if((p->kstack = kalloc()) == 0){
+    //If error in allocation, remove from embryo and revert to free list
+    #ifdef CS333_P3P4
+    acquire(&ptable.lock);
+    int rc = stateListRemove(&ptable.pLists.embryo, &ptable.pLists.embryo_tail, p);
+    if (rc < 0)
+      panic("Failure in stateListRemove from embryo list\n");
+    assertState(p, EMBRYO);
+    p->state = UNSUSED;
+    stateListAdd(&ptable.pLists.free, &ptable.pLists.free_tail, p);
+    release(&ptable.lock);
+
+    #else
     p->state = UNUSED;
+    #endif
+
     return 0;
   }
   sp = p->kstack + KSTACKSIZE;
@@ -755,10 +793,21 @@ initFreeList(void)
     stateListAdd(&ptable.pLists.free, &ptable.pLists.free_tail, p);
   }
 }
+
+static void 
+assertState(struct proc* p, enum proc state)
+{
+  if(p->state != state) {
+    cprintf("Failure in assertState. p->state is %s instead of %s", states[p->state], states[state]);
+    panic("Kernel panic\n");
+  }
+}
+
 #endif
 
 #ifdef CS333_P2
-int getprocs(uint max, struct uproc * table)
+int 
+getprocs(uint max, struct uproc * table)
 {
   struct proc * p;
   int count;

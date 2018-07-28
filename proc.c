@@ -479,6 +479,79 @@ wait(void)
 int
 wait(void)
 {
+  struct proc *p;
+  int havekids, pid;
+
+  acquire(&ptable.lock);
+  for(;;){
+    havekids = 0;
+
+    // Search through zombie list for children
+    p = ptable.pLists.zombie;
+    while(p && !havekids) {
+      if(p->parent == proc) {
+        // Child was found
+        havekids = 1;
+        pid = p->pid;
+        kfree(p->kstack);
+        p->kstack = 0;
+        freevm(p->pgdir);
+        // Reap child, zombie->free transition
+        int rc = stateListRemove(&ptable.pLists.zombie, &ptable.pLists.zombie_tail, p);
+        if (rc < 0)
+          panic("Failure in stateListRemove from zombie list - wait()\n");
+        assertState(p, ZOMBIE);
+        p->state = UNUSED;
+        stateListAdd(&ptable.pLists.free, &ptable.pLists.free_tail, p);
+        p->pid = 0;
+        p->parent = 0;
+        p->name[0] = 0;
+        p->killed = 0;
+        release(&ptable.lock);
+        return pid;
+      }
+      p = p->next;
+    }
+
+    // Search through ready list for children
+    p = ptable.pLists.ready;
+    while(p && !havekids) {
+      if(p->parent == proc) {
+        // Child was found
+        havekids = 1;
+      }
+      p = p->next;
+    }
+
+    // Search through running list for children
+    p = ptable.pLists.running;
+    while(p && !havekids) {
+      if(p->parent == proc) {
+        // Child was found
+        havekids = 1;
+      }
+      p = p->next;
+    }
+
+    // Search through sleep list for children
+    p = ptable.pLists.sleep;
+    while(p && !havekids) {
+      if(p->parent == proc) {
+        // Child was found
+        havekids = 1;
+      }
+      p = p->next;
+    }
+
+    // No point waiting if we don't have any children.
+    if(!havekids || proc->killed){
+      release(&ptable.lock);
+      return -1;
+    }
+
+    // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+    sleep(proc, &ptable.lock);  //DOC: wait-sleep
+  }
 
   return 0;  // placeholder
 }

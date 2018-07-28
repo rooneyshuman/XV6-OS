@@ -94,7 +94,7 @@ allocproc(void)
   //1st remove from old list, then assert state, update state, and last add to new state list
   int rc = stateListRemove(&ptable.pLists.free, &ptable.pLists.free_tail, p);
   if (rc < 0)
-    panic("Failure in stateListRemove from free list\n");
+    panic("Failure in stateListRemove from free list - allocproc()\n");
   assertState(p, UNUSED);
   p->state = EMBRYO;
   stateListAdd(&ptable.pLists.embryo, &ptable.pLists.embryo_tail, p);
@@ -113,7 +113,7 @@ allocproc(void)
     acquire(&ptable.lock);
     int rc = stateListRemove(&ptable.pLists.embryo, &ptable.pLists.embryo_tail, p);
     if (rc < 0)
-      panic("Failure in stateListRemove from embryo list\n");
+      panic("Failure in stateListRemove from embryo list - allocproc()\n");
     assertState(p, EMBRYO);
     p->state = UNSUSED;
     stateListAdd(&ptable.pLists.free, &ptable.pLists.free_tail, p);
@@ -188,11 +188,12 @@ userinit(void)
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
 
+  //P3 - embryo->ready transition
   #ifdef CS333_P3P4
   acquire(&ptable.lock);
   int rc = stateListRemove(&ptable.pLists.embryo, &ptable.pLists.embryo_tail, p);
   if (rc < 0)
-    panic("Failure in stateListRemove from embryo list\n");
+    panic("Failure in stateListRemove from embryo listi - userinit()\n");
   assertState(p, EMBRYO);
   p->state = RUNNABLE;
   stateListAdd(&ptable.pLists.ready, &ptable.pLists.ready_tail, p);
@@ -246,7 +247,22 @@ fork(void)
   if((np->pgdir = copyuvm(proc->pgdir, proc->sz)) == 0){
     kfree(np->kstack);
     np->kstack = 0;
+
+    //P3 - embryo->free transition
+    #ifdef CS333_P3P4
+    acquire(&ptable.lock);
+    int rc = stateListRemove(&ptable.pLists.embryo, &ptable.pLists.embryo_tail, p);
+    if (rc < 0)
+      panic("Failure in stateListRemove from embryo list - fork()\n");
+    assertState(p, EMBRYO);
+    p->state = UNUSED;
+    stateListAdd(&ptable.pLists.free, &ptable.pLists.free_tail, p);
+    release(&ptable.lock);
+
+    #else
     np->state = UNUSED;
+    #endif
+
     return -1;
   }
   np->sz = proc->sz;
@@ -272,7 +288,20 @@ fork(void)
 
   // lock to force the compiler to emit the np->state write last.
   acquire(&ptable.lock);
-  np->state = RUNNABLE;
+
+  //P3 - embryo->ready transition
+  #ifdef CS333_P3P4
+  int rc = stateListRemove(&ptable.pLists.embryo, &ptable.pLists.embryo_tail, p);
+  if (rc < 0)
+    panic("Failure in stateListRemove from embryo list - fork()\n");
+  assertState(p, EMBRYO);
+  p->state = RUNNABLE;
+  stateListAdd(&ptable.pLists.ready, &ptable.pLists.ready_tail, p);
+
+  #else
+  p->state = RUNNABLE;
+  #endif
+
   release(&ptable.lock);
 
   return pid;

@@ -188,7 +188,20 @@ userinit(void)
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
 
+  #ifdef CS333_P3P4
+  acquire(&ptable.lock);
+  int rc = stateListRemove(&ptable.pLists.embryo, &ptable.pLists.embryo_tail, p);
+  if (rc < 0)
+    panic("Failure in stateListRemove from embryo list\n");
+  assertState(p, EMBRYO);
   p->state = RUNNABLE;
+  stateListAdd(&ptable.pLists.ready, &ptable.pLists.ready_tail, p);
+  release(&ptable.lock);
+
+  #else
+  p->state = RUNNABLE;
+  #endif
+
   //P2 - UID, GID
   #ifdef CS333_P2
   p->uid = DEFUID;

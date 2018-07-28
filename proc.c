@@ -382,7 +382,7 @@ exit(void)
   wakeup1(proc->parent);
 
   // P3 - Search ready, running, sleep, & zombie lists for abandoned
-  // children and pass to initi if exiting process is parent.
+  // children and pass to init if exiting process is parent.
 
   //Ready list search
   p = ptable.pLists.ready;
@@ -420,14 +420,12 @@ exit(void)
 
   // Jump into the scheduler, never to return.
   //P3 - running->zombie transition
-  acquire(&ptable.lock);
   int rc = stateListRemove(&ptable.pLists.running, &ptable.pLists.running_tail, proc);
   if (rc < 0)
     panic("Failure in stateListRemove from running list - exit()\n");
   assertState(proc, RUNNING);
   proc->state = ZOMBIE;
   stateListAdd(&ptable.pLists.zombie, &ptable.pLists.zombie_tail, proc);
-  release(&ptable.lock);
 
   sched();
   panic("zombie exit");
@@ -565,7 +563,7 @@ scheduler(void)
       switchuvm(p);
       int rc = stateListRemove(&ptable.pLists.ready, &ptable.pLists.ready_tail, p);
       if (rc < 0)
-        panic("Failure in stateListRemove from running list - scheduler()\n");
+        panic("Failure in stateListRemove from ready list - scheduler()\n");
       assertState(p, RUNNABLE);
       p->state = RUNNING;
       stateListAdd(&ptable.pLists.running, &ptable.pLists.running_tail, p);
@@ -618,7 +616,20 @@ void
 yield(void)
 {
   acquire(&ptable.lock);  //DOC: yieldlock
+
+  //P3 - running->ready
+  #ifdef CS333_P3P4
+  int rc = stateListRemove(&ptable.pLists.running, &ptable.pLists.running_tail, proc);
+  if (rc < 0)
+    panic("Failure in stateListRemove from running list - yield()\n");
+  assertState(proc, RUNNING);
   proc->state = RUNNABLE;
+  stateListAdd(&ptable.pLists.ready, &ptable.pLists.ready_tail, proc);
+
+  #else
+  proc->state = RUNNABLE;
+  #endif
+
   sched();
   release(&ptable.lock);
 }
@@ -697,7 +708,23 @@ wakeup1(void *chan)
 static void
 wakeup1(void *chan)
 {
+  //P3 - traverse through sleep list, if chan matches: sleeping->ready transition
+  struct proc *p;
+  p = ptable.pLists.sleep;
 
+  while(p){
+    if(p->chan == chan){
+      acquire(&ptable.lock);
+      int rc = stateListRemove(&ptable.pLists.sleep, &ptable.pLists.sleep_tail, p);
+      if (rc < 0)
+        panic("Failure in stateListRemove from running list - wakeup1()\n");
+      assertState(p, SLEEPING);
+      p->state = RUNNABLE;
+      stateListAdd(&ptable.pLists.ready, &ptable.pLists.ready_tail, p);
+      release(&ptable.lock);
+    }
+    p = p->next;
+  }
 }
 #endif
 

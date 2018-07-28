@@ -387,27 +387,24 @@ exit(void)
   //Ready list search
   p = ptable.pLists.ready;
   while(p) {
-    if(p->parent == proc) {
+    if(p->parent == proc) 
       p->parent = initproc;
-    }
     p = p->next;    //Traverse through list
   }
 
   //Running list search
   p = ptable.pLists.running;
   while(p) {
-    if(p->parent == proc) {
+    if(p->parent == proc) 
       p->parent = initproc;
-    }
     p = p->next;    //Traverse through list
   }
 
   //Sleep list search
   p = ptable.pLists.sleep;
   while(p) {
-    if(p->parent == proc) {
+    if(p->parent == proc) 
       p->parent = initproc;
-    }
     p = p->next;    //Traverse through list
   }
 

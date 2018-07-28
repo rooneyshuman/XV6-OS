@@ -193,7 +193,7 @@ userinit(void)
   acquire(&ptable.lock);
   int rc = stateListRemove(&ptable.pLists.embryo, &ptable.pLists.embryo_tail, p);
   if (rc < 0)
-    panic("Failure in stateListRemove from embryo listi - userinit()\n");
+    panic("Failure in stateListRemove from embryo list - userinit()\n");
   assertState(p, EMBRYO);
   p->state = RUNNABLE;
   stateListAdd(&ptable.pLists.ready, &ptable.pLists.ready_tail, p);
@@ -251,12 +251,12 @@ fork(void)
     //P3 - embryo->free transition
     #ifdef CS333_P3P4
     acquire(&ptable.lock);
-    int rc = stateListRemove(&ptable.pLists.embryo, &ptable.pLists.embryo_tail, p);
+    int rc = stateListRemove(&ptable.pLists.embryo, &ptable.pLists.embryo_tail, np);
     if (rc < 0)
       panic("Failure in stateListRemove from embryo list - fork()\n");
-    assertState(p, EMBRYO);
-    p->state = UNUSED;
-    stateListAdd(&ptable.pLists.free, &ptable.pLists.free_tail, p);
+    assertState(np, EMBRYO);
+    np->state = UNUSED;
+    stateListAdd(&ptable.pLists.free, &ptable.pLists.free_tail, np);
     release(&ptable.lock);
 
     #else
@@ -291,15 +291,15 @@ fork(void)
 
   //P3 - embryo->ready transition
   #ifdef CS333_P3P4
-  int rc = stateListRemove(&ptable.pLists.embryo, &ptable.pLists.embryo_tail, p);
+  int rc = stateListRemove(&ptable.pLists.embryo, &ptable.pLists.embryo_tail, np);
   if (rc < 0)
     panic("Failure in stateListRemove from embryo list - fork()\n");
-  assertState(p, EMBRYO);
-  p->state = RUNNABLE;
-  stateListAdd(&ptable.pLists.ready, &ptable.pLists.ready_tail, p);
+  assertState(np, EMBRYO);
+  np->state = RUNNABLE;
+  stateListAdd(&ptable.pLists.ready, &ptable.pLists.ready_tail, np);
 
   #else
-  p->state = RUNNABLE;
+  np->state = RUNNABLE;
   #endif
 
   release(&ptable.lock);
@@ -352,11 +352,88 @@ exit(void)
   sched();
   panic("zombie exit");
 }
+
 #else
 void
 exit(void)
 {
+  struct proc *p;
+  int fd;
 
+  if(proc == initproc)
+    panic("init exiting");
+
+  // Close all open files.
+  for(fd = 0; fd < NOFILE; fd++){
+    if(proc->ofile[fd]){
+      fileclose(proc->ofile[fd]);
+      proc->ofile[fd] = 0;
+    }
+  }
+
+  begin_op();
+  iput(proc->cwd);
+  end_op();
+  proc->cwd = 0;
+
+  acquire(&ptable.lock);
+
+  // Parent might be sleeping in wait().
+  wakeup1(proc->parent);
+
+  // P3 - Search ready, running, sleep, & zombie lists for abandoned
+  // children and pass to initi if exiting process is parent.
+
+  //Ready list search
+  p = ptable.pLists.ready;
+  while(p) {
+    if(p->parent == proc) {
+      p->parent = initproc;
+    }
+    p = p->next;    //Traverse through list
+  }
+
+  //Running list search
+  p = ptable.pLists.running;
+  while(p) {
+    if(p->parent == proc) {
+      p->parent = initproc;
+    }
+    p = p->next;    //Traverse through list
+  }
+
+  //Sleep list search
+  p = ptable.pLists.sleep;
+  while(p) {
+    if(p->parent == proc) {
+      p->parent = initproc;
+    }
+    p = p->next;    //Traverse through list
+  }
+
+  //Zombie list search
+  p = ptable.pLists.zombie;
+  while(p) {
+    if(p->parent == proc) {
+      p->parent = initproc;
+      wakeup1(initproc);    //Wakeup parent
+    }
+    p = p->next;    //Traverse through list
+  }
+
+  // Jump into the scheduler, never to return.
+  //P3 - running->zombie transition
+  acquire(&ptable.lock);
+  int rc = stateListRemove(&ptable.pLists.running, &ptable.pLists.running_tail, proc);
+  if (rc < 0)
+    panic("Failure in stateListRemove from running list - exit()\n");
+  assertState(proc, RUNNING);
+  proc->state = ZOMBIE;
+  stateListAdd(&ptable.pLists.zombie, &ptable.pLists.zombie_tail, proc);
+  release(&ptable.lock);
+
+  sched();
+  panic("zombie exit");
 }
 #endif
 

@@ -543,7 +543,49 @@ scheduler(void)
 void
 scheduler(void)
 {
+  struct proc *p;
+  int idle;  // for checking if processor is idle
 
+  for(;;){
+    // Enable interrupts on this processor.
+    sti();
+
+    idle = 1;  // assume idle unless we schedule a process
+
+    // If ready list is not empty, run scheduler in RR
+    acquire(&ptable.lock);
+
+    p = ptable.pLists.ready;
+    if(p){
+      // Switch to chosen process.  It is the process's job
+      // to release ptable.lock and then reacquire it
+      // before jumping back to us.
+      idle = 0;  // not idle this timeslice
+      proc = p;
+      switchuvm(p);
+      int rc = stateListRemove(&ptable.pLists.ready, &ptable.pLists.ready_tail, p);
+      if (rc < 0)
+        panic("Failure in stateListRemove from running list - scheduler()\n");
+      assertState(p, RUNNABLE);
+      p->state = RUNNING;
+      stateListAdd(&ptable.pLists.running, &ptable.pLists.running_tail, p);
+      #ifdef CS333_P2
+      p->cpu_ticks_in = ticks;
+      #endif
+      swtch(&cpu->scheduler, proc->context);
+      switchkvm();
+
+      // Process is done running for now.
+      // It should have changed its p->state before coming back.
+      proc = 0;
+    }
+    release(&ptable.lock);
+    // if idle, wait for next interrupt
+    if (idle) {
+      sti();
+      hlt();
+    }
+  }
 }
 #endif
 

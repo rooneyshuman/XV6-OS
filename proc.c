@@ -678,7 +678,20 @@ sleep(void *chan, struct spinlock *lk)
 
   // Go to sleep.
   proc->chan = chan;
+
+  //P3 - running->sleeping
+  #ifdef CS333_P3P4
+  int rc = stateListRemove(&ptable.pLists.running, &ptable.pLists.running_tail, proc);
+  if (rc < 0)
+    panic("Failure in stateListRemove from running list - sleep()\n");
+  assertState(proc, RUNNING);
   proc->state = SLEEPING;
+  stateListAdd(&ptable.pLists.sleep, &ptable.pLists.sleep_tail, proc);
+
+  #else
+  proc->state = SLEEPING;
+  #endif
+
   sched();
 
   // Tidy up.
@@ -709,19 +722,18 @@ static void
 wakeup1(void *chan)
 {
   //P3 - traverse through sleep list, if chan matches: sleeping->ready transition
+  //ptable is locked in wakeup() already, no need to acquire/release lock
   struct proc *p;
   p = ptable.pLists.sleep;
 
   while(p){
     if(p->chan == chan){
-      acquire(&ptable.lock);
       int rc = stateListRemove(&ptable.pLists.sleep, &ptable.pLists.sleep_tail, p);
       if (rc < 0)
         panic("Failure in stateListRemove from running list - wakeup1()\n");
       assertState(p, SLEEPING);
       p->state = RUNNABLE;
       stateListAdd(&ptable.pLists.ready, &ptable.pLists.ready_tail, p);
-      release(&ptable.lock);
     }
     p = p->next;
   }

@@ -631,18 +631,17 @@ scheduler(void)
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
-      idle = 0;  // not idle this timeslice
-      proc = p;
-      switchuvm(p);
+      // If process in ready list, remove and give CPU
       int rc = stateListRemove(&ptable.pLists.ready, &ptable.pLists.ready_tail, p);
       if (rc < 0)
         panic("Failure in stateListRemove from ready list - scheduler()\n");
       assertState(p, RUNNABLE);
+      idle = 0;  // not idle this timeslice
+      proc = p;
+      switchuvm(p);
       p->state = RUNNING;
-      stateListAdd(&ptable.pLists.running, &ptable.pLists.running_tail, p);
-      #ifdef CS333_P2
       p->cpu_ticks_in = ticks;
-      #endif
+      stateListAdd(&ptable.pLists.running, &ptable.pLists.running_tail, p);
       swtch(&cpu->scheduler, proc->context);
       switchkvm();
 

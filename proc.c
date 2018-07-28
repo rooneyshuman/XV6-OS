@@ -776,8 +776,51 @@ kill(int pid)
 int
 kill(int pid)
 {
+  struct proc *p;
 
-  return 0;  // placeholder
+  acquire(&ptable.lock);
+
+  // Ready list search
+  p = ptable.pLists.ready;
+  while(p) {
+    if(p->pid == pid){
+      p->killed = 1;
+      release(&ptable.lock);
+      return 0;
+    }
+    p = p->next;    // Traverse through list
+  }
+
+  // Running list search
+  p = ptable.pLists.running;
+  while(p) {
+    if(p->pid == pid){
+      p->killed = 1;
+      release(&ptable.lock);
+      return 0;
+    }
+    p = p->next;    // Traverse through list
+  }
+
+  // Sleep list search - if in sleep, put on ready list
+  p = ptable.pLists.sleep;
+  while(p) {
+    if(p->pid == pid){
+      p->killed = 1;
+      int rc = stateListRemove(&ptable.pLists.sleep, &ptable.pLists.sleep_tail, p);
+      if (rc < 0)
+        panic("Failure in stateListRemove from sleeping list - kill()\n");
+      assertState(proc, SLEEPING;
+      p->state = RUNNABLE;
+      stateListAdd(&ptable.pLists.ready, &ptable.pLists.ready_tail, p);
+      release(&ptable.lock);
+      return 0;
+    }
+    p = p->next;    // Traverse through list
+  }
+
+  release(&ptable.lock);
+  return -1;  // Process not found
 }
 #endif
 

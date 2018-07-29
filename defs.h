@@ -124,6 +124,12 @@ void            yield(void);
 #ifdef CS333_P2
 int             getprocs(uint, struct uproc*);
 #endif
+#ifdef CS333_P3P4
+void            readydump(void);
+void            freedump(void);
+void            sleepdump(void);
+void            zombiedump(void);
+#endif
 
 // swtch.S
 void            swtch(struct context**, struct context*);

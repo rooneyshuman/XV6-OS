@@ -190,6 +190,12 @@ void
 consoleintr(int (*getc)(void))
 {
   int c, doprocdump = 0;
+  #ifdef CS333_P3P4
+  int doreadydump = 0;
+  int dofreedump = 0;
+  int dosleepdump = 0;
+  int dozombiedump = 0;
+  #endif
 
   acquire(&cons.lock);
   while((c = getc()) >= 0){
@@ -197,6 +203,20 @@ consoleintr(int (*getc)(void))
     case C('P'):  // Process listing.
       doprocdump = 1;   // procdump() locks cons.lock indirectly; invoke later
       break;
+    #ifdef CS333_P3P4
+    case C('R'):  // Ready process listing.
+      doreadydump = 1;   // readydump() locks cons.lock indirectly; invoke later
+      break;
+    case C('F'):  // Free process count.
+      dofreedump = 1;   // freedump() locks cons.lock indirectly; invoke later
+      break;
+    case C('S'):  // Sleeping process listing.
+      dosleepdump = 1;   // sleepdump() locks cons.lock indirectly; invoke later
+      break;
+    case C('Z'):  // Zombie process listing.
+      dozombiedump = 1;   // zombiedump() locks cons.lock indirectly; invoke later
+      break;
+    #endif
     case C('U'):  // Kill line.
       while(input.e != input.w &&
             input.buf[(input.e-1) % INPUT_BUF] != '\n'){
@@ -227,6 +247,20 @@ consoleintr(int (*getc)(void))
   if(doprocdump) {
     procdump();  // now call procdump() wo. cons.lock held
   }
+  #ifdef CS333_P3P4
+  if(doreadydump) {
+    readydump();  // now call readydump() wo. cons.lock held
+  }
+  if(dofreedump) {
+    freedump();  // now call freedump() wo. cons.lock held
+  }
+  if(dosleepdump) {
+    sleepdump();  // now call sleepdump() wo. cons.lock held
+  }
+  if(dozombiedump) {
+    zombiedump();  // now call zombiedump() wo. cons.lock held
+  }
+  #endif
 }
 
 int

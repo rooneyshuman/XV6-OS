@@ -1115,6 +1115,90 @@ assertState(struct proc* p, enum proc state)
   }
 }
 
+// P3 - control-r sequence - ready list
+void
+readydump(void)
+{
+  struct proc *p;
+  p = ptable.pLists.ready;
+
+  acquire(&ptable.lock);
+  cprintf("Ready List Processes:\n");
+  while(p) {
+    cprintf("%d ", p->pid);
+    if(p->next)
+      cprintf("-> ");
+    p = p->next;
+  }
+
+  cprintf("\n");
+  release(&ptable.lock);
+}
+
+// P3 - control-f sequence - free list
+void 
+freedump(void)
+{
+  struct proc *p;
+  int free_count = 0;
+  p = ptable.pLists.free;
+
+  acquire(&ptable.lock);
+  while(p) {
+    ++free_count;
+    p = p->next;
+  }
+
+  cprintf("Free List Size: %d processes\n", free_count);
+  release(&ptable.lock);
+}
+
+// P3 - control-s sequence - sleep list
+void 
+sleepdump(void)
+{
+  struct proc *p;
+  p = ptable.pLists.sleep;
+
+  acquire(&ptable.lock);
+  cprintf("Sleep List Processes:\n");
+  while(p) {
+    cprintf("%d ", p->pid);
+    if(p->next)
+      cprintf("-> ");
+    p = p->next;
+  }
+
+  cprintf("\n");
+  release(&ptable.lock);
+}
+
+// P3 - control-z sequence - zombie list
+void
+zombiedump(void)
+{
+  struct proc *p;
+  int ppid = 0;
+  p = ptable.pLists.zombie;
+
+  acquire(&ptable.lock);
+  cprintf("Zombie List Processes:\n");
+  while(p) {
+    if(p->parent)
+      ppid = p->parent->pid;
+    else
+      ppid = p->pid;
+    cprintf("(%d, %d) ", p->pid, ppid);
+    if(p->next)
+      cprintf("-> ");
+    p = p->next;
+  }
+
+  cprintf("\n");
+  release(&ptable.lock);
+
+}
+
 #endif
 
 #ifdef CS333_P2

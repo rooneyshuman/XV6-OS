@@ -51,7 +51,7 @@ static void initFreeList(void);
 static void __attribute__ ((unused)) stateListAdd(struct proc** head, struct proc** tail, struct proc* p);
 static void __attribute__ ((unused)) stateListAddAtHead(struct proc** head, struct proc** tail, struct proc* p);
 static int __attribute__ ((unused)) stateListRemove(struct proc** head, struct proc** tail, struct proc* p);
-static void assertState(struct proc* p, enum proc state);
+static void assertState(struct proc* p, enum procstate state);
 #endif
 
 void
@@ -75,10 +75,10 @@ allocproc(void)
   
   //For P3P4 - check free list
   #ifdef CS333_P3P4
-  if(ptable.pLists.free)
+  if(ptable.pLists.free) {
     p = ptable.pLists.free;
     goto found;
-     
+  }
   #else
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if(p->state == UNUSED)
@@ -92,8 +92,7 @@ allocproc(void)
   #ifdef CS333_P3P4
   //Panics kernel if error in removing process from free list, proceeds otherwise to add to embryo list
   //1st remove from old list, then assert state, update state, and last add to new state list
-  int rc = stateListRemove(&ptable.pLists.free, &ptable.pLists.free_tail, p);
-  if (rc < 0)
+  if (stateListRemove(&ptable.pLists.free, &ptable.pLists.free_tail, p) < 0)
     panic("Failure in stateListRemove from free list - allocproc()\n");
   assertState(p, UNUSED);
   p->state = EMBRYO;
@@ -115,7 +114,7 @@ allocproc(void)
     if (rc < 0)
       panic("Failure in stateListRemove from embryo list - allocproc()\n");
     assertState(p, EMBRYO);
-    p->state = UNSUSED;
+    p->state = UNUSED;
     stateListAdd(&ptable.pLists.free, &ptable.pLists.free_tail, p);
     release(&ptable.lock);
 
@@ -882,7 +881,7 @@ kill(int pid)
       int rc = stateListRemove(&ptable.pLists.sleep, &ptable.pLists.sleep_tail, p);
       if (rc < 0)
         panic("Failure in stateListRemove from sleeping list - kill()\n");
-      assertState(proc, SLEEPING;
+      assertState(proc, SLEEPING);
       p->state = RUNNABLE;
       stateListAdd(&ptable.pLists.ready, &ptable.pLists.ready_tail, p);
       release(&ptable.lock);
@@ -1107,7 +1106,7 @@ initFreeList(void)
 }
 
 static void 
-assertState(struct proc* p, enum proc state)
+assertState(struct proc* p, enum procstate state)
 {
   if(p->state != state) {
     cprintf("Failure in assertState. p->state is %s instead of %s", states[p->state], states[state]);

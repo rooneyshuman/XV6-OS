@@ -881,7 +881,7 @@ kill(int pid)
       int rc = stateListRemove(&ptable.pLists.sleep, &ptable.pLists.sleep_tail, p);
       if (rc < 0)
         panic("Failure in stateListRemove from sleeping list - kill()\n");
-      assertState(proc, SLEEPING);
+      assertState(p, SLEEPING);
       p->state = RUNNABLE;
       stateListAdd(&ptable.pLists.ready, &ptable.pLists.ready_tail, p);
       release(&ptable.lock);

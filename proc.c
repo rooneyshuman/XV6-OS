@@ -10,8 +10,8 @@
 
 #ifdef CS333_P3P4
 struct state_lists {
-  struct proc* ready;
-  struct proc* ready_tail;
+  struct proc* ready[MAXPRIO + 1];
+  struct proc* ready_tail[MAXPRIO + 1];
   struct proc* free;
   struct proc* free_tail;
   struct proc* sleep;

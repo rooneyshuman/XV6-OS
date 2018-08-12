@@ -197,7 +197,7 @@ sys_setpriority(void)
 int
 sys_getpriority(void)
 {
-  int pid,
+  int pid;
 
   if(argint(0, &pid) < 0)
     return -1;

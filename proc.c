@@ -1198,6 +1198,110 @@ zombiedump(void)
 
 }
 
+//P4 - prio syscalls
+int
+setpriority(int pid, int priority)
+{
+  struct proc *p;
+
+  acquire(&ptable.lock);
+
+  //search ready list queues
+  for(int i = 0; i < MAXPRIO + 1; ++i) {
+    p  = ptable.pLists.ready[i];
+    while(p) {
+      //match found
+      if(p->pid == pid) {
+        if (stateListRemove(&ptable.pLists.ready[i], &ptable.pLists.ready_tail[i], p) < 0)
+          panic("Failure in stateListRemove from ready list - setpriority()\n");
+        assertState(p, RUNNABLE);
+        p->priority = priority;
+        p->budget = BUDGET;
+        stateListAdd(&ptable.pLists.ready[i], &ptable.pLists.ready_tail[i], p);
+        release(&ptable.lock);
+        return 0;
+      }  
+      p = p->next;
+    }
+  }
+  
+  //search sleep list
+  p = ptable.pLists.sleep;
+  while(p) {
+    //match found
+    if(p->pid == pid) {
+      p->priority = priority;
+      p->budget = BUDGET;
+      release(&ptable.lock);
+      return 0;
+    }  
+    p = p->next;
+  }
+
+  //search running list
+  p = ptable.pLists.running;
+  while(p) {
+    //match found
+    if(p->pid == pid) {
+      p->priority = priority;
+      p->budget = BUDGET;
+      release(&ptable.lock);
+      return 0;
+    }  
+    p = p->next;
+  }
+  
+  //no match found
+  release(&ptable.lock);
+  return -1;
+}
+
+int
+getpriority(int pid)
+{
+  struct proc *p;
+
+  acquire(&ptable.lock);
+
+  //search ready list queues
+  for(int i = 0; i < MAXPRIO + 1; ++i) {
+    p  = ptable.pLists.ready[i];
+    while(p) {
+      //match found
+      if(p->pid == pid) {
+        release(&ptable.lock);
+        return p->priority;
+      }  
+      p = p->next;
+    }
+  }
+  
+  //search sleep list
+  p = ptable.pLists.sleep;
+  while(p) {
+    //match found
+    if(p->pid == pid) {
+      release(&ptable.lock);
+      return p->priority;
+    }  
+    p = p->next;
+  }
+
+  //search running list
+  p = ptable.pLists.running;
+  while(p) {
+    //match found
+    if(p->pid == pid) {
+      release(&ptable.lock);
+      return p->priority;
+    }  
+    p = p->next;
+  }
+  
+  //no match found
+  release(&ptable.lock);
+  return -1;
+}
 #endif
 
 #ifdef CS333_P2

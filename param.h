@@ -12,5 +12,8 @@
 #define NBUF         (MAXOPBLOCKS*3)  // size of disk block cache
 // #define FSSIZE       1000  // size of file system in blocks
 #define FSSIZE       2000  // size of file system in blocks  // CS333 requires a larger FS.
-#define DEFUID       0   //default uid
-#define DEFGID       0   //default gid
+#define DEFUID       0   // default uid
+#define DEFGID       0   // default gid
+#define MAXPRIO      7   // max number of prio queues
+#define TICKS_TO_PROMOTE  2000  // elapsed ticks before promoting
+#define BUDGET       200  // default budget value - used for demotion

@@ -149,6 +149,11 @@ allocproc(void)
   p->cpu_ticks_total = 0;
   p->cpu_ticks_in = 0;
   #endif
+  //P4 - MLFQ scheduling
+  #ifdef CS333_P3P4
+  p->priority = 0;
+  p->budget = BUDGET;
+  #endif
 
   return p;
 }
@@ -195,7 +200,7 @@ userinit(void)
     panic("Failure in stateListRemove from embryo list - userinit()\n");
   assertState(p, EMBRYO);
   p->state = RUNNABLE;
-  stateListAdd(&ptable.pLists.ready, &ptable.pLists.ready_tail, p);
+  stateListAdd(&ptable.pLists.ready[0], &ptable.pLists.ready_tail[0], p);
   release(&ptable.lock);
 
   #else
@@ -295,7 +300,7 @@ fork(void)
     panic("Failure in stateListRemove from embryo list - fork()\n");
   assertState(np, EMBRYO);
   np->state = RUNNABLE;
-  stateListAdd(&ptable.pLists.ready, &ptable.pLists.ready_tail, np);
+  stateListAdd(&ptable.pLists.ready[np->priority], &ptable.pLists.ready_tail[np->priority], np);
 
   #else
   np->state = RUNNABLE;
@@ -384,11 +389,13 @@ exit(void)
   // children and pass to init if exiting process is parent.
 
   //Ready list search
-  p = ptable.pLists.ready;
-  while(p) {
-    if(p->parent == proc) 
-      p->parent = initproc;
-    p = p->next;    //Traverse through list
+  for(int i = 0; i < MAXPRIO + 1; ++i) {
+    p = ptable.pLists.ready[i];
+    while(p) {
+      if(p->parent == proc) 
+        p->parent = initproc;
+      p = p->next;    //Traverse through list
+    }
   }
 
   //Running list search
@@ -513,13 +520,15 @@ wait(void)
     }
 
     // Search through ready list for children
-    p = ptable.pLists.ready;
-    while(p && !havekids) {
-      if(p->parent == proc) {
-        // Child was found
-        havekids = 1;
+    for(int i = 0; i < MAXPRIO + 1; ++i) {
+      p = ptable.pLists.ready[i];
+      while(p && !havekids) {
+        if(p->parent == proc) {
+          // Child was found
+          havekids = 1;
+        }
+        p = p->next;
       }
-      p = p->next;
     }
 
     // Search through running list for children
@@ -625,13 +634,18 @@ scheduler(void)
     // If ready list is not empty, run scheduler in RR
     acquire(&ptable.lock);
 
-    p = ptable.pLists.ready;
+    // Find process to schedule - search through queues
+    for(int i = 0; i < MAXPRIO + 1; ++i) {
+      if(ptable.pLists.ready[i])    //queue not empty
+        p = ptable.pLists.ready[i];
+    }
+
     if(p){
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
       // If process in ready list, remove and give CPU
-      int rc = stateListRemove(&ptable.pLists.ready, &ptable.pLists.ready_tail, p);
+      int rc = stateListRemove(&ptable.pLists.ready[p->priority], &ptable.pLists.ready_tail[p->priority], p);
       if (rc < 0)
         panic("Failure in stateListRemove from ready list - scheduler()\n");
       assertState(p, RUNNABLE);
@@ -695,7 +709,7 @@ yield(void)
     panic("Failure in stateListRemove from running list - yield()\n");
   assertState(proc, RUNNING);
   proc->state = RUNNABLE;
-  stateListAdd(&ptable.pLists.ready, &ptable.pLists.ready_tail, proc);
+  stateListAdd(&ptable.pLists.ready[proc->priority], &ptable.pLists.ready_tail[proc->priority], proc);
 
   #else
   proc->state = RUNNABLE;
@@ -804,7 +818,7 @@ wakeup1(void *chan)
         panic("Failure in stateListRemove from running list - wakeup1()\n");
       assertState(p, SLEEPING);
       p->state = RUNNABLE;
-      stateListAdd(&ptable.pLists.ready, &ptable.pLists.ready_tail, p);
+      stateListAdd(&ptable.pLists.ready[p->priority], &ptable.pLists.ready_tail[p->priority], p);
     }
     p = p->next;
   }
@@ -851,15 +865,17 @@ kill(int pid)
 
   acquire(&ptable.lock);
 
-  // Ready list search
-  p = ptable.pLists.ready;
-  while(p) {
-    if(p->pid == pid){
-      p->killed = 1;
-      release(&ptable.lock);
-      return 0;
+  // Ready list queue search
+  for(int i = 0; i < MAXPRIO + 1; ++i) {
+    p = ptable.pLists.ready[i];
+    while(p) {
+      if(p->pid == pid){
+        p->killed = 1;
+        release(&ptable.lock);
+        return 0;
+      }
+      p = p->next;    // Traverse through list
     }
-    p = p->next;    // Traverse through list
   }
 
   // Running list search
@@ -883,7 +899,7 @@ kill(int pid)
         panic("Failure in stateListRemove from sleeping list - kill()\n");
       assertState(p, SLEEPING);
       p->state = RUNNABLE;
-      stateListAdd(&ptable.pLists.ready, &ptable.pLists.ready_tail, p);
+      stateListAdd(&ptable.pLists.ready[p->priority], &ptable.pLists.ready_tail[p->priority], p);
       release(&ptable.lock);
       return 0;
     }
@@ -1076,8 +1092,10 @@ stateListRemove(struct proc** head, struct proc** tail, struct proc* p)
 static void
 initProcessLists(void)
 {
-  ptable.pLists.ready = 0;
-  ptable.pLists.ready_tail = 0;
+  for(int i = 0; i < MAXPRIO + 1; ++i){
+    ptable.pLists.ready[i] = 0;
+    ptable.pLists.ready_tail[i] = 0;
+  }
   ptable.pLists.free = 0;
   ptable.pLists.free_tail = 0;
   ptable.pLists.sleep = 0;
@@ -1117,8 +1135,9 @@ assertState(struct proc* p, enum procstate state)
 // P3 - control-r sequence - ready list
 void
 readydump(void)
-{
+{/*
   struct proc *p;
+  
   p = ptable.pLists.ready;
 
   acquire(&ptable.lock);
@@ -1131,7 +1150,7 @@ readydump(void)
   }
 
   cprintf("\n");
-  release(&ptable.lock);
+  release(&ptable.lock);*/
 }
 
 // P3 - control-f sequence - free list

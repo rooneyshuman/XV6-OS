@@ -40,6 +40,11 @@ int setuid(uint);
 int setgid(uint);
 int getprocs(uint, struct uproc*);
 #endif
+//P4 - prio syscalls
+#ifdef CS333_P3P4
+int setpriority(int pid, int priority);
+int getpriority(int pid);
+#endif
 
 // ulib.c
 int stat(char*, struct stat*);

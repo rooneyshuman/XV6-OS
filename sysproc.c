@@ -131,7 +131,7 @@ sys_getgid(void)
 uint
 sys_getppid(void)
 {
-  //Return pid for process w/o ppid (init)
+  //Return pid for process w/o parent (init)
   if (!proc->parent)
     return proc->pid;
   return proc->parent->pid;
@@ -174,5 +174,36 @@ sys_getprocs(void)
     return -1;
   
   return getprocs(max,table);
+}
+#endif
+//P4 - prio syscalls
+#ifdef CS333_P3P4
+int
+sys_setpriority(void)
+{
+  int pid, priority;
+
+  if(argint(0, &pid) < 0)
+    return -1;
+  if(argint(1, &priority) < 0)
+    return -1;
+  if(priority < 0 || priority > MAXPRIO)
+    return -1;
+  if(pid < 0)
+    return -1;
+
+  return setpriority(pid, priority);
+}
+int
+sys_getpriority(void)
+{
+  int pid,
+
+  if(argint(0, &pid) < 0)
+    return -1;
+  if(pid < 0)
+    return -1;
+  
+  return getpriority(pid);
 }
 #endif

@@ -80,6 +80,8 @@ struct proc {
   //P3 - state lists
   #ifdef CS333_P3P4
   struct proc* next;
+  uint priority;               // Priority queue value
+  int budget;                  // Budget value used for demotion
   #endif
 };
 

@@ -129,8 +129,8 @@ void            readydump(void);
 void            freedump(void);
 void            sleepdump(void);
 void            zombiedump(void);
-void            setpriority(int, int);
-void            getpriority(int);
+int             setpriority(int, int);
+int             getpriority(int);
 #endif
 
 // swtch.S

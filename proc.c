@@ -30,6 +30,7 @@ struct {
   struct proc proc[NPROC];
   #ifdef CS333_P3P4
   struct state_lists pLists;
+  uint PromoteAtTime;
   #endif
 } ptable;
 
@@ -151,7 +152,8 @@ allocproc(void)
   #endif
   //P4 - MLFQ scheduling
   #ifdef CS333_P3P4
-  p->priority = 0;
+  p->next = 0;
+  p->priority = MAXPRIO;
   p->budget = BUDGET;
   #endif
 
@@ -171,6 +173,7 @@ userinit(void)
   acquire(&ptable.lock);
   initProcessLists();
   initFreeList();
+  ptable.PromoteAtTime = ticks + TICKS_TO_PROMOTE;
   release(&ptable.lock);
   #endif 
 
@@ -200,7 +203,7 @@ userinit(void)
     panic("Failure in stateListRemove from embryo list - userinit()\n");
   assertState(p, EMBRYO);
   p->state = RUNNABLE;
-  stateListAdd(&ptable.pLists.ready[0], &ptable.pLists.ready_tail[0], p);
+  stateListAdd(&ptable.pLists.ready[p->priority], &ptable.pLists.ready_tail[p->priority], p);
   release(&ptable.lock);
 
   #else
@@ -295,6 +298,8 @@ fork(void)
 
   //P3 - embryo->ready transition
   #ifdef CS333_P3P4
+  np->priority = proc->priority;
+  np->budget =  BUDGET;
   int rc = stateListRemove(&ptable.pLists.embryo, &ptable.pLists.embryo_tail, np);
   if (rc < 0)
     panic("Failure in stateListRemove from embryo list - fork()\n");
@@ -633,11 +638,49 @@ scheduler(void)
 
     // If ready list is not empty, run scheduler in RR
     acquire(&ptable.lock);
+    
+    // Promote processes 1 level
+    if(ticks >= ptable.PromoteAtTime) {
+      //Ready list promotion
+      for(int i = 0; i < MAXPRIO; ++i) {
+        p = ptable.pLists.ready[i];
+        while(p) {
+          int rc = stateListRemove(&ptable.pLists.ready[i], &ptable.pLists.ready_tail[i], p);
+          if (rc < 0)
+            panic("Failure in stateListRemove during promotion - scheduler()\n");
+          assertState(p, RUNNABLE);
+          p->priority += 1;         //increase priority
+          p->budget = BUDGET;       //reset budget
+          stateListAdd(&ptable.pLists.ready[i+1], &ptable.pLists.ready_tail[i+1], p);
+          p = p->next;
+        }
+      }        
+      //Sleep list promotion
+      p = ptable.pLists.sleep;
+      while(p) {
+        if(p->priority < MAXPRIO) {
+          p->priority += 1;         //increase priority
+          p->budget = BUDGET;       //reset budget
+        }
+        p = p->next;
+      }
+      //Running list promotion
+      p = ptable.pLists.running;
+      while(p) {
+        if(p->priority < MAXPRIO) {
+          p->priority += 1;         //increase priority
+          p->budget = BUDGET;       //reset budget
+        }
+        p = p->next;
+      }
+    }
 
     // Find process to schedule - search through queues
-    for(int i = 0; i < MAXPRIO + 1; ++i) {
-      if(ptable.pLists.ready[i])    //queue not empty
+    for(int i = MAXPRIO; i >= 0; --i) {
+      if(ptable.pLists.ready[i]) {   //queue not empty
         p = ptable.pLists.ready[i];
+        break;
+      }
     }
 
     if(p){
@@ -708,6 +751,14 @@ yield(void)
   if (rc < 0)
     panic("Failure in stateListRemove from running list - yield()\n");
   assertState(proc, RUNNING);
+  //P4 - adjust budget and demote if exhausted
+  proc->budget -= ticks - proc->cpu_ticks_in;
+  if(proc->budget <= 0) {   //demote process
+    if(proc->priority > 0)
+      --(proc->priority);
+    proc->budget = BUDGET;
+  }
+
   proc->state = RUNNABLE;
   stateListAdd(&ptable.pLists.ready[proc->priority], &ptable.pLists.ready_tail[proc->priority], proc);
 
@@ -770,6 +821,13 @@ sleep(void *chan, struct spinlock *lk)
   if (rc < 0)
     panic("Failure in stateListRemove from running list - sleep()\n");
   assertState(proc, RUNNING);
+  //P4 - adjust budget and demote if exhausted
+  proc->budget -= ticks - proc->cpu_ticks_in;
+  if(proc->budget <= 0) {   //demote process
+    if(proc->priority > 0)
+      --(proc->priority);
+    proc->budget = BUDGET;
+  }
   proc->state = SLEEPING;
   stateListAdd(&ptable.pLists.sleep, &ptable.pLists.sleep_tail, proc);
 

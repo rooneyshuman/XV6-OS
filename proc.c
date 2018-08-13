@@ -673,11 +673,12 @@ scheduler(void)
         }
         p = p->next;
       }
+      ptable.PromoteAtTime = ticks + TICKS_TO_PROMOTE;
     }
 
     // Find process to schedule - search through queues
     for(int i = MAXPRIO; i >= 0; --i) {
-      if(ptable.pLists.ready[i]) {   //queue not empty
+      if(ptable.pLists.ready[i] != 0) {   //queue not empty
         p = ptable.pLists.ready[i];
         break;
       }
@@ -688,7 +689,7 @@ scheduler(void)
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
       // If process in ready list, remove and give CPU
-      int rc = stateListRemove(&ptable.pLists.ready[p->priority], &ptable.pLists.ready_tail[p->priority], p);
+      int rc = stateListRemove(&ptable.pLists.ready[i], &ptable.pLists.ready_tail[i], p);
       if (rc < 0)
         panic("Failure in stateListRemove from ready list - scheduler()\n");
       assertState(p, RUNNABLE);
@@ -990,7 +991,9 @@ procdump(void)
   char *state;
   uint pc[10];
 
-  #ifdef CS333_P2
+  #ifdef CS333_P3P4
+  cprintf("\nPID\tName\t\tUID\tGID\tPPID\tPrio\tElapsed\tCPU\tState\tSize\t PCs\n");
+  #elif CS333_P2
   cprintf("\nPID\tName\t\tUID\tGID\tPPID\tElapsed\tCPU\tState\tSize\t PCs\n");
   #elif CS333_P1
   cprintf("\nPID\tState\tName\tElapsed\t PCs\n");
@@ -1004,8 +1007,44 @@ procdump(void)
     else
       state = "???";
 	  
+    //P2 - ctrl-p print prio
+	  #ifdef CS333_P3P4
+    int ppid;
+    int elapsed;
+    int millisec;
+    int cpu_millisec;
+    int cpu;
+
+    if(p->parent)
+      ppid = p->parent->pid;
+    else
+      ppid = p->pid;
+    elapsed = ticks - p->start_ticks;
+    millisec = elapsed % 1000;
+    elapsed = elapsed/1000;
+    cpu = p->cpu_ticks_total;
+    cpu_millisec = cpu % 1000;
+    cpu = cpu/1000;
+
+    cprintf("%d\t%s\t", p->pid, p->name);
+    if (strlen(p->name) < 7)    //Ensures column spacing is aligned for longer names
+      cprintf("\t");
+    cprintf("%d\t%d\t%d\t%d\t%d.", p->uid, p->gid, ppid, p->priority, elapsed);
+
+	  if (millisec < 10)
+      cprintf("00");
+    else if (millisec < 100 && millisec >= 10)
+      cprintf("0");  
+	  cprintf("%d\t%d.", millisec, cpu);
+   
+	  if (cpu_millisec < 10)
+      cprintf("00");
+    else if (cpu_millisec < 100 && cpu_millisec >= 10)
+      cprintf("0");  
+	  cprintf("%d\t%s\t%d\t", cpu_millisec, state, p->sz,"\n");
+
     //P2 - ctrl-p print UID, GID, PPID
-	  #ifdef CS333_P2
+	  #elif CS333_P2
     int ppid;
     int elapsed;
     int millisec;
@@ -1193,22 +1232,26 @@ assertState(struct proc* p, enum procstate state)
 // P3 - control-r sequence - ready list
 void
 readydump(void)
-{/*
+{
   struct proc *p;
-  
-  p = ptable.pLists.ready;
 
   acquire(&ptable.lock);
   cprintf("Ready List Processes:\n");
-  while(p) {
-    cprintf("%d ", p->pid);
-    if(p->next)
-      cprintf("-> ");
-    p = p->next;
+  for(int i = MAXPRIO; i >=0; --i) {
+    if(i == MAXPRIO)
+      cprintf("MAXPRIO: ");
+    else
+      cprintf("MAXPRIO-%d: ", MAXPRIO-i);
+    p = ptable.pLists.ready[i];
+    while(p) {
+      cprintf("%d, %d ", p->pid, p->budget);
+      if(p->next)
+        cprintf("-> ");
+      p = p->next;
+    }
   }
-
   cprintf("\n");
-  release(&ptable.lock);*/
+  release(&ptable.lock);
 }
 
 // P3 - control-f sequence - free list
@@ -1407,6 +1450,9 @@ getprocs(uint max, struct uproc * table)
       safestrcpy(table->state, states[p->state], STRMAX);
       table->size = p->sz;
       safestrcpy(table->name, p->name, STRMAX);
+      #ifdef CS333_P3P4
+      table->priority = p->priority;
+      #endif
       ++table;
     }
     ++p;

@@ -20,7 +20,11 @@ main(void)
   if(count < 0)
     printf(2, "There was an error in creating the user process table\n");
   else {
+    #ifdef CS333_P3P4
+    printf(1, "\nPID\tName\t\tUID\tGID\tPPID\tPrio\tElapsed\tCPU\tState\tSize\n");
+    #else
     printf(1, "\nPID\tName\t\tUID\tGID\tPPID\tElapsed\tCPU\tState\tSize\n");
+    #endif
 
     for(int i = 0; i < count; ++i) {
       elapsed = table[i].elapsed_ticks;
@@ -33,7 +37,11 @@ main(void)
       printf(1, "%d\t%s\t", table[i].pid, table[i].name);
       if (strlen(table[i].name) < 7)  //Ensures columns are aligned for long names
         printf(1,"\t");
+      #ifdef CS333_P3P4
+      printf(1, "%d\t%d\t%d\t%d.", table[i].uid, table[i].gid, table[i].ppid, table[i].priority, elapsed);
+      #else
       printf(1, "%d\t%d\t%d\t%d.", table[i].uid, table[i].gid, table[i].ppid, elapsed);
+      #endif
       if (millisec < 10)
         printf(1, "00");
       else if (millisec < 100 && millisec >= 10)

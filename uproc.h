@@ -9,8 +9,11 @@ struct uproc {
   uint ppid;                   // Parent process' ID
   uint elapsed_ticks;          // Time since process started
   uint CPU_total_ticks;        // Total elapsed ticks in CPU
-  char sate[STRMAX];           // Process state
+  char state[STRMAX];          // Process state
   uint size;                   // Size of process memory (bytes)
   char name[STRMAX];           // Process name
+  #ifdef CS333_P3P4
+  uint priority;               // Priority value
+  #endif
 };
 

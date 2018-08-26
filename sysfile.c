@@ -440,3 +440,53 @@ sys_pipe(void)
   fd[1] = fd1;
   return 0;
 }
+
+#ifdef CS333_P5
+int
+sys_chmod(void)
+{
+  char* path;
+  int mode;
+
+  if(argstr(0, &path) < 0 || argint(1, &mode) < 0)
+    return -1;
+
+  //max octal value is 1777, in decimal 1023
+  if(mode < 0 || mode > 1023)     //out of bounds
+    return -1;
+
+  return chmod(path, mode);
+}
+
+int
+sys_chown(void)
+{
+  char* path;
+  int owner;
+
+  if(argstr(0, &path) < 0 || argint(1, &owner) < 0)
+    return -1;
+
+  //max value is the uid max 32767
+  if(owner < 0 || owner > 32767)
+    return -1;
+
+  return chown(path, owner);
+}
+
+int
+sys_chgrp(void)
+{
+  char* path;
+  int group;
+
+  if(argstr(0, &path) < 0 || argint(1, &group) < 0)
+    return -1;
+
+  //max value is the gid max 32767
+  if(owner < 0 || group > 32767)
+    return -1;
+
+  return chgrp(path, group);
+}
+#endif

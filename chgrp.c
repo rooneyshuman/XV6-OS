@@ -4,7 +4,16 @@
 int
 main(void)
 {
-  printf(1, "Not imlpemented yet.\n");
+  //arg count is not 3, error
+  if(argc != 3) {
+    printf(2, "Error - wrong number of arguments. Usage: chgrp OWNER TARGET \n");
+    exit();
+  }
+  
+  int rc = chgrp(argv[2], atoi(argv[1]));
+  if(rc < 0)
+    printf(2, "Error - wrong pathname or GID value \n");
+
   exit();
 }
 

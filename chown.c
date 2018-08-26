@@ -2,10 +2,19 @@
 #include "types.h"
 #include "user.h"
 int
-main(void)
+main(int argc, char * argv[])
 {
-  printf(1, "Not imlpemented yet.\n");
-  exit();
+  //arg count is not 3, error
+  if(argc != 3) {
+    printf(2, "Error - wrong number of arguments. Usage: chown OWNER TARGET \n");
+    exit();
+  }
+  
+  int rc = chown(argv[2], atoi(argv[1]));
+  if(rc < 0)
+    printf(2, "Error - wrong pathname or UID value \n");
+
+  exit(); 
 }
 
 #endif

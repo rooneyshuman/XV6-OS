@@ -2,10 +2,19 @@
 #include "types.h"
 #include "user.h"
 int
-main(void)
+main(int argc, char * argv[])
 {
-  printf(1, "Not imlpemented yet.\n");
-  exit();
+  //arg count is not 3, error
+  if(argc != 3) {
+    printf(2, "Error - wrong number of arguments. Usage: chmod MODE TARGET \n");
+    exit();
+  }
+  
+  int rc = chmod(argv[2], atoo(argv[1]));
+  if(rc < 0)
+    printf(2, "Error - wrong pathname or mode value \n");
+
+  exit(); 
 }
 
 #endif

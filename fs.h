@@ -43,7 +43,7 @@ union mode_t {
     uint setuid : 1;
     uint     : 22;    // pad
   } flags;
-  uint asIntl
+  uint asInt;
 };
 #endif
 

@@ -669,3 +669,74 @@ nameiparent(char *path, char *name)
 {
   return namex(path, 1, name);
 }
+
+#ifdef CS333_P5
+int
+chmod(char *path, int mode)
+{
+  struct inode * ip;
+
+  begin_op();
+  ip = namei(path);   //namei() returns the corresponding inode
+  if(ip == 0) {       //no inode found
+    end_op;
+    return -1;
+  }
+
+  //inode found, lock inode and update mode
+  ilock(ip);
+  ip->mode.asInt = mode;
+  iupdate(ip);        //copy to dinode
+  iunlock(ip);
+  iput(ip);           //free ip 
+  end_op();
+
+  return 0;
+}
+
+int
+chown(char *path, int owner)
+{
+  struct inode * ip;
+
+  begin_op();
+  ip = namei(path);   //namei() returns the corresponding inode
+  if(ip == 0) {       //no inode found
+    end_op;
+    return -1;
+  }
+  
+  //inode found, lock inode and update mode
+  ilock(ip);
+  ip->uid = owner;
+  iupdate(ip);        //copy to dinode
+  iunlock(ip);
+  iput(ip);           //free ip 
+  end_op();
+
+  return 0;
+}
+
+int
+chgrp(char *path, int group)
+{
+  struct inode * ip;
+
+  begin_op();
+  ip = namei(path);   //namei() returns the corresponding inode
+  if(ip == 0) {       //no inode found
+    end_op;
+    return -1;
+  }
+
+  //inode found, lock inode and update mode
+  ilock(ip);
+  ip->gid = group;
+  iupdate(ip);        //copy to dinode
+  iunlock(ip);
+  iput(ip);           //free ip 
+  end_op();
+
+  return 0;
+}
+#endif

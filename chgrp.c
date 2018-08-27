@@ -2,11 +2,11 @@
 #include "types.h"
 #include "user.h"
 int
-main(void)
+main(int argc, char * argv[])
 {
   //arg count is not 3, error
   if(argc != 3) {
-    printf(2, "Error - wrong number of arguments. Usage: chgrp OWNER TARGET \n");
+    printf(2, "Error - wrong number of arguments. Usage: chgrp GROUP TARGET \n");
     exit();
   }
   

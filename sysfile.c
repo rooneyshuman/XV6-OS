@@ -484,7 +484,7 @@ sys_chgrp(void)
     return -1;
 
   //max value is the gid max 32767
-  if(owner < 0 || group > 32767)
+  if(group < 0 || group > 32767)
     return -1;
 
   return chgrp(path, group);

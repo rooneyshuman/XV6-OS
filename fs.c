@@ -679,7 +679,7 @@ chmod(char *path, int mode)
   begin_op();
   ip = namei(path);   //namei() returns the corresponding inode
   if(ip == 0) {       //no inode found
-    end_op;
+    end_op();
     return -1;
   }
 
@@ -702,7 +702,7 @@ chown(char *path, int owner)
   begin_op();
   ip = namei(path);   //namei() returns the corresponding inode
   if(ip == 0) {       //no inode found
-    end_op;
+    end_op();
     return -1;
   }
   
@@ -725,7 +725,7 @@ chgrp(char *path, int group)
   begin_op();
   ip = namei(path);   //namei() returns the corresponding inode
   if(ip == 0) {       //no inode found
-    end_op;
+    end_op();
     return -1;
   }
 

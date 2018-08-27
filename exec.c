@@ -41,7 +41,7 @@ exec(char *path, char **argv)
     if(!st.mode.flags.u_x)
       goto bad;
   }
-  else if(proc->gid == st.gid) {    //gid matches but user execute flag is not set
+  else if(proc->gid == st.gid) {    //gid matches but group execute flag is not set
     if(!st.mode.flags.g_x)
       goto bad;
   }

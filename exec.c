@@ -32,10 +32,10 @@ exec(char *path, char **argv)
   ilock(ip);
   pgdir = 0;
 
+  #ifdef CS333_P5
   // Check if file has permissions
   stati(ip, &st);   //copy inode to stat
   
-  #ifdef CS333_P5
   // Order to check: user, group, other
   if(proc->uid == st.uid) {         //uid matches but user execute flag is not set
     if(!st.mode.flags.u_x)
